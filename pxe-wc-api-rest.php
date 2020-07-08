@@ -164,6 +164,7 @@ if (!class_exists('PXE_WC_Api_Rest')) :
         {
             $args['show_in_rest'] = true;
             return $args;
+            
         } */
     }
 
