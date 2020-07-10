@@ -63,11 +63,48 @@ if (!class_exists('PXE_WC_Api_Rest')) :
          *
          * @return void
          */
-        public static function create_order( $request )
+        public static function create_order($request)
         {
-            $parameters = $request->get_params();
+            $adress_data = $request['address'];
+            $line_items = $request['line_items'];
 
-            return 'create_order';
+            $address = array(
+                'first_name' => $adress_data['first_name'],
+                'last_name'  => $adress_data['last_name'],
+                'company'    => $adress_data['company'],
+                'email'      => $adress_data['email'],
+                'phone'      => $adress_data['phone'],
+                'address_1'  => $adress_data['address_1'],
+                'address_2'  => $adress_data['address_2'],
+                'city'       => $adress_data['city'],
+                'state'      => $adress_data['state'],
+                'postcode'   => $adress_data['postcode'],
+                'country'    => $adress_data['country']
+            );
+            $order = wc_create_order();
+
+            foreach ($line_items as $item) {
+                $product_item = wc_get_product($item['productId']);
+                $order->add_product(
+                    $product_item,
+                    $item['quantity']
+                );
+            }
+
+            // Set addresses
+            $order->set_address($address, 'billing');
+            $order->set_address($address, 'shipping');
+
+            // Set payment gateway
+            $payment_gateways = WC()->payment_gateways->payment_gateways();
+            $order->set_payment_method($payment_gateways['bacs']);
+
+            // Calculate totals
+            $order->calculate_totals();
+            $order->update_status('completed', 'Order created dynamically - ', TRUE);
+            //$order->update_status('Completed', 'Order created dynamically - ', TRUE);
+
+            return true;
         }
 
         /**
